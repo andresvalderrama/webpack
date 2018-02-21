@@ -1,0 +1,12 @@
+@import './variables.css';
+
+body {
+  background-color: var(--red);
+}
+
+div {
+  background-image: url(../img/facebook.png)
+}
+div {
+  background-image: url(../img/facebook.svg)
+}
