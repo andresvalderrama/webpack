@@ -5,22 +5,11 @@ const CleanWebpackPlugin = require('clean-webpack-plugin')
 const UglifyJSPlugin = require('uglifyjs-webpack-plugin')
 const ExtractTextPlugin = require("extract-text-webpack-plugin")
 
-const cssloaders = ExtractTextPlugin.extract({
-  use: [
-    {
-      loader: 'css-loader',
-      options: {
-        importLoaders: 1
-      }
-    },
-    {
-      loader: 'postcss-loader',
-      options: {
-        sourceMap: true
-      }
-    }
-  ]
-})
+const directory = process.env.npm_config_directory
+const source = 'source'
+const sourcePath = path.resolve(__dirname, `${source}`, `${directory}`)
+const public = 'public'
+const publicPath = path.resolve(__dirname, `${public}`, `${directory}`)
 
 function toObject (paths) {
   let ret = {}
@@ -36,18 +25,40 @@ function toObject (paths) {
 
 module.exports = env => {
   return {
-    entry: toObject(glob.sync('./source/js/*.js')), // https://github.com/webpack/webpack/issues/1189
+    entry: toObject(glob.sync(`${sourcePath}/js/*.*(js|jsx)`)), // https://github.com/webpack/webpack/issues/1189
     output: {
-      publicPath: '/',
-      path: path.join(__dirname),
-      filename: 'public/js/[name]_[hash].js'
+      path: path.join(__dirname, 'public', `${directory}`),
+      filename: 'js/[name]_[hash].js'
     },
     devtool: 'source-map',
     module: {
       rules: [
         {
+          test: /\.jsx$/,
+          exclude: /node_modules/,
+          use: {
+            loader: 'babel-loader'
+          }
+        },
+        {
           test: /\.css$/,
-          use: cssloaders
+          use: ExtractTextPlugin.extract({
+            use: [
+              {
+                loader: 'css-loader',
+                options: {
+                  importLoaders: 1,
+                  minimize: true
+                }
+              },
+              {
+                loader: 'postcss-loader',
+                options: {
+                  sourceMap: true
+                }
+              }
+            ]
+          })
         },
         {
           test: /\.(ttf|eot|woff)$/,
@@ -56,7 +67,7 @@ module.exports = env => {
             options: {
               name: '[name]_[hash].[ext]',
               publicPath: '../fonts/',
-              outputPath: '/public/fonts/'
+              outputPath: 'fonts'
             }
           }
         },
@@ -67,19 +78,19 @@ module.exports = env => {
             options: {
               name: '[name]_[hash].[ext]',
               publicPath: '../img/',
-              outputPath: '/public/img/'
+              outputPath: 'img'
             }
           }
         }
       ]
     },
     plugins: [
-      new CleanWebpackPlugin(['public']),
+      new CleanWebpackPlugin([`${publicPath}`]),
       new UglifyJSPlugin({
         sourceMap: true
       }),
       new ExtractTextPlugin({
-        filename: 'public/css/[name]_[hash].css'
+        filename: 'css/[name]_[hash].css'
       })
     ]
   }

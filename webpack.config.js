@@ -5,22 +5,13 @@ const CleanWebpackPlugin = require('clean-webpack-plugin')
 const UglifyJSPlugin = require('uglifyjs-webpack-plugin')
 const ExtractTextPlugin = require("extract-text-webpack-plugin")
 
-const cssloaders = ExtractTextPlugin.extract({
-  use: [
-    {
-      loader: 'css-loader',
-      options: {
-        importLoaders: 1
-      }
-    },
-    {
-      loader: 'postcss-loader',
-      options: {
-        sourceMap: true
-      }
-    }
-  ]
-})
+const directory = process.env.npm_config_directory
+const source = 'source'
+const sourcePath = path.resolve(__dirname, `${source}`, `${directory}`)
+/*
+const isValidDirectory = /landing|consola/.test(directory)
+*/
+
 
 function toObject (paths) {
   let ret = {}
@@ -33,51 +24,65 @@ function toObject (paths) {
   }
   return ret
 }
-
-module.exports = env => {
-  return {
-    entry: toObject(glob.sync('./source/js/*.js')), // https://github.com/webpack/webpack/issues/1189
-    output: {
-      publicPath: '/',
-      path: path.join(__dirname),
-      filename: env === 'development' ? 'public/js/[name].js' : 'public/js/[name]_[hash].js'
-    },
-    watch: true,
-    devtool: 'inline-source-map',
-    module: {
-      rules: [
-        {
-          test: /\.css$/,
-          use: cssloaders
-        },
-        {
-          test: /\.(ttf|eot|woff)$/,
-          use: {
-            loader: 'file-loader',
-            options: {
-              name: env === 'development' ? '[name].[ext]' : '[name]_[hash].[ext]',
-              publicPath: '../fonts/',
-              outputPath: '/public/fonts/'
+module.exports = {
+  entry: toObject(glob.sync(`${sourcePath}/js/*.*(js|jsx)`)), // https://github.com/webpack/webpack/issues/1189
+  output: {
+    path: path.join(__dirname, 'public', `${directory}`),
+    filename: 'js/[name].js'
+  },
+  watch: true,
+  devtool: 'inline-source-map',
+  module: {
+    rules: [
+      {
+        test: /\.jsx$/,
+        exclude: /node_modules/,
+        use: {
+          loader: 'babel-loader'
+        }
+      },
+      {
+        test: /\.css$/,
+        use: ExtractTextPlugin.extract({
+          use: [
+            {
+              loader: 'css-loader',
+              options: { importLoaders: 1 }
+            },
+            {
+              loader: 'postcss-loader',
+              options: { sourceMap: true }
             }
-          }
-        },
-        {
-          test: /\.(png|svg)$/,
-          use: {
-            loader: 'file-loader',
-            options: {
-              name: env === 'development' ? '[name].[ext]' : '[name]_[hash].[ext]',
-              publicPath: '../img/',
-              outputPath: '/public/img/'
-            }
+          ]
+        })
+      },
+      {
+        test: /\.(ttf|eot|woff)$/,
+        use: {
+          loader: 'file-loader',
+          options: {
+            name: '[name].[ext]',
+            publicPath: '../fonts/',
+            outputPath: 'fonts'
           }
         }
-      ]
-    },
-    plugins: [
-      new ExtractTextPlugin({
-        filename: 'public/css/[name].css'
-      })
+      },
+      {
+        test: /\.(png|svg)$/,
+        use: {
+          loader: 'file-loader',
+          options: {
+            name: '[name].[ext]',
+            publicPath: '../img/',
+            outputPath: 'img'
+          }
+        }
+      }
     ]
-  }
+  },
+  plugins: [
+    new ExtractTextPlugin({
+      filename: 'css/[name].css'
+    })
+  ]
 }
