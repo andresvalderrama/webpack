@@ -2,15 +2,18 @@ const path = require('path')
 const glob = require('glob')
 
 const CleanWebpackPlugin = require('clean-webpack-plugin')
-const UglifyJSPlugin = require('uglifyjs-webpack-plugin')
 const ExtractTextPlugin = require("extract-text-webpack-plugin")
+const HtmlLoader = require('html-loader')
 
 const directory = process.env.npm_config_directory
 const source = 'source'
 const sourcePath = path.resolve(__dirname, `${source}`, `${directory}`)
-/*
 const isValidDirectory = /landing|consola/.test(directory)
-*/
+
+if (!directory || !isValidDirectory) {
+  console.error('ERRRRRRRRRRRRRRRRRRRR! Por favor defina la variable directory. $ npm run watch:source --directory=landing | consola ')
+  process.exit(1);
+}
 
 
 function toObject (paths) {
@@ -68,13 +71,23 @@ module.exports = {
         }
       },
       {
-        test: /\.(png|svg)$/,
+        test: /\.(gif|png|jpe?g|svg)$/,
         use: {
           loader: 'file-loader',
           options: {
             name: '[name].[ext]',
             publicPath: '../img/',
             outputPath: 'img'
+          }
+        }
+      },
+      {
+        test: /\.(html)$/,
+        use: {
+          loader: 'html-loader',
+          options: {
+            attrs: [':src'],
+            root: path.resolve(__dirname)
           }
         }
       }
